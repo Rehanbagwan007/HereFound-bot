@@ -1,0 +1,21 @@
+# Node
+node_modules
+npm-debug.log*
+.DS_Store
+coverage
+
+# Python
+__pycache__
+*.py[cod]
+*.env
+.env
+
+# Next.js
+.next
+out
+
+# Supabase
+supabase/.cache
+
+# IDE
+.vscode

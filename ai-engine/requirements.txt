@@ -1,0 +1,6 @@
+fastapi==0.114.0
+uvicorn[standard]==0.23.2
+google-generativeai==0.7.0
+httpx==0.26.3
+yt-dlp==2026.03.08
+dotenv==1.0.0
