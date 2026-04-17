@@ -15,6 +15,9 @@ export default function Home() {
           <Link className="rounded border border-slate-600 px-4 py-2 hover:bg-slate-800" href="/public-report/your-report-id">
             Public Reporter View
           </Link>
+          <Link className="rounded border border-slate-600 px-4 py-2 hover:bg-slate-800" href="/privacy">
+            Privacy Policy
+          </Link>
         </div>
       </div>
     </main>
