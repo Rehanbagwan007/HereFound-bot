@@ -14,7 +14,7 @@ interface ViolationRow {
 }
 
 export default async function DashboardPage() {
-  const supabaseServer = createServerComponentClient({ cookies });
+  const supabaseServer = createServerClient({ cookies });
   const { data, error } = await supabaseServer
     .from('flagged_violations')
     .select('id,reel_url,reporter_username,status,violation_type,it_act_section,confidence,created_at')
