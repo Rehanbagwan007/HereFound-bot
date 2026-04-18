@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 import yt_dlp
 import google.generativeai as genai
@@ -8,6 +9,13 @@ import google.generativeai as genai
 load_dotenv()
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-pro')

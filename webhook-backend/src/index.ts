@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import { supabase } from './supabaseClient.js';
@@ -7,6 +8,7 @@ import { MetaWebhookPayload } from './types/meta.js';
 dotenv.config();
 
 const app = express();
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
