@@ -7,8 +7,7 @@ coverage
 # Python
 __pycache__
 *.py[cod]
-*.env
-.env
+
 
 # Next.js
 .next
