@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createServerComponentClient } from '@supabase/ssr';
 import { CopyDraftButton } from './CopyDraftButton';
 
 interface ReportPageProps {
