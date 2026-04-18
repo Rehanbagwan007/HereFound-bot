@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { CopyDraftButton } from './CopyDraftButton';
 
 interface ReportPageProps {
@@ -7,7 +7,11 @@ interface ReportPageProps {
 }
 
 export default async function ReportPage({ params }: ReportPageProps) {
-  const supabaseServer = createServerComponentClient({ cookies });
+  const supabaseServer = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+    { cookies }
+  );
   const { data, error } = await supabaseServer
     .from('flagged_violations')
     .select('id,reel_url,reporter_username,status,violation_type,it_act_section,confidence,cyber_police_draft')

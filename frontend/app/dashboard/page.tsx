@@ -1,6 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { supabase } from '../../lib/supabaseClient';
 
 interface ViolationRow {
   id: string;
@@ -14,7 +13,11 @@ interface ViolationRow {
 }
 
 export default async function DashboardPage() {
-  const supabaseServer = createServerClient({ cookies });
+  const supabaseServer = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+    { cookies }
+  );
   const { data, error } = await supabaseServer
     .from('flagged_violations')
     .select('id,reel_url,reporter_username,status,violation_type,it_act_section,confidence,created_at')
