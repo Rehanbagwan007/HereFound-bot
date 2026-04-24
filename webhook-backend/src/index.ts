@@ -73,19 +73,19 @@ app.post('/webhook', async (req: Request, res: Response) => {
   const payload = req.body as MetaWebhookPayload;
 
   if (!payload || payload.object !== 'instagram') {
-    return res.status(400).json({ error: 'Unsupported webhook object' });
+    return res.status(200).json({ success: true, message: 'Ignored non-instagram object' });
   }
 
   const entry = payload.entry?.[0];
   if (!entry) {
-    return res.status(400).json({ error: 'Missing payload entry' });
+    return res.status(200).json({ success: true, message: 'Ignored missing payload entry' });
   }
 
   const change = entry.changes?.[0];
   const value = change?.value;
 
   if (!value) {
-    return res.status(400).json({ error: 'Missing change value' });
+    return res.status(200).json({ success: true, message: 'Ignored missing change value' });
   }
 
   const isDm = !!value.sender;
