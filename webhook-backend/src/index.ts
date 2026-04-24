@@ -51,7 +51,7 @@ async function sendMetaMessage(recipientId: string, text: string) {
 
 async function replyToComment(commentId: string, text: string) {
   await axios.post(
-    `https://graph.facebook.com/v17.0/${commentId}/comments`,
+    `https://graph.facebook.com/v17.0/${commentId}/replies`,
     { message: text },
     { params: { access_token: pageAccessToken } }
   );
