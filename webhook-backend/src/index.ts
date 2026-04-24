@@ -36,15 +36,6 @@ app.get('/webhook', (req: Request, res: Response) => {
   return res.status(403).send('Verification failed');
 });
 
-function parseReelData(message: string): { reelUrl: string | null; reporterUsername: string | null } {
-  const urlMatch = message.match(/https?:\/\/[^(\s)]+/i);
-  const reelUrl = urlMatch ? urlMatch[0] : null;
-
-  const usernameMatch = message.match(/@([a-zA-Z0-9._-]+)/);
-  const reporterUsername = usernameMatch ? usernameMatch[1] : null;
-
-  return { reelUrl, reporterUsername };
-}
 
 async function sendMetaMessage(recipientId: string, text: string) {
   await axios.post(
@@ -89,10 +80,19 @@ app.post('/webhook', async (req: Request, res: Response) => {
   const isMention = !!value.comment_id;
 
   const rawMessage = value.message || '';
-  const { reelUrl, reporterUsername } = parseReelData(rawMessage);
+  // Parse Reel URL from text
+  const urlMatch = rawMessage.match(/https?:\\/\\/[^(\\s)]+/i);
+  const reelUrl = urlMatch ? urlMatch[0] : null;
+
+  // Extract reporter username natively from DM payload, mention payload, or fallback to regex in message text
+  let reporterUsername = value.from?.username || value.from?.id || value.sender?.username || value.sender?.id;
+  if (!reporterUsername) {
+    const usernameMatch = rawMessage.match(/@([a-zA-Z0-9._-]+)/);
+    reporterUsername = usernameMatch ? usernameMatch[1] : null;
+  }
 
   if (!reelUrl || !reporterUsername) {
-    return res.status(422).json({ error: 'Unable to parse reel URL or reporter username' });
+    return res.status(422).json({ error: 'Unable to parse reel URL or reporter username', details: { reelUrl, reporterUsername, rawMessage } });
   }
 
   try {
