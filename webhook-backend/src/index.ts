@@ -57,6 +57,18 @@ async function replyToComment(commentId: string, text: string) {
   );
 }
 
+async function getMediaPermalink(mediaId: string): Promise<string | null> {
+  try {
+    const response = await axios.get(`https://graph.facebook.com/v17.0/${mediaId}`, {
+      params: { fields: 'permalink_url', access_token: pageAccessToken }
+    });
+    return response.data.permalink_url || null;
+  } catch (err) {
+    console.error(`Failed to get media permalink for ${mediaId}`, err);
+    return null;
+  }
+}
+
 app.post('/webhook', async (req: Request, res: Response) => {
   const payload = req.body as MetaWebhookPayload;
 
@@ -79,10 +91,20 @@ app.post('/webhook', async (req: Request, res: Response) => {
   const isDm = !!value.sender;
   const isMention = !!value.comment_id;
 
+  // Handle Meta's Webhook Test Payload (which has no message or sender/from)
+  if (!value.message && !value.from && !value.sender) {
+    console.log('Received structural Meta test webhook payload. Acknowledging with 200.');
+    return res.status(200).json({ success: true, test: true });
+  }
+
   const rawMessage = value.message || '';
   // Parse Reel URL from text
   const urlMatch = rawMessage.match(/https?:\/\/[^\s]+/i);
-  const reelUrl = urlMatch ? urlMatch[0] : null;
+  let reelUrl = urlMatch ? urlMatch[0] : null;
+
+  if (!reelUrl && value.media_id) {
+    reelUrl = await getMediaPermalink(value.media_id);
+  }
 
   // Extract reporter username natively from DM payload, mention payload, or fallback to regex in message text
   let reporterUsername = value.from?.username || value.from?.id || value.sender?.username || value.sender?.id;
