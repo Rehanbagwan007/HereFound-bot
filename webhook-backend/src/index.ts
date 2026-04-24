@@ -81,7 +81,7 @@ app.post('/webhook', async (req: Request, res: Response) => {
 
   const rawMessage = value.message || '';
   // Parse Reel URL from text
-  const urlMatch = rawMessage.match(/https?:\\/\\/[^(\\s)]+/i);
+  const urlMatch = rawMessage.match(/https?:\/\/[^\s]+/i);
   const reelUrl = urlMatch ? urlMatch[0] : null;
 
   // Extract reporter username natively from DM payload, mention payload, or fallback to regex in message text
