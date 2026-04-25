@@ -82,37 +82,70 @@ app.post('/webhook', async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, message: 'Ignored missing payload entry' });
   }
 
-  const change = entry.changes?.[0];
-  const value = change?.value;
+  let value: any = null;
+  let isDm = false;
+  let isMention = false;
+  let changeField = '';
 
-  if (!value) {
-    return res.status(200).json({ success: true, message: 'Ignored missing change value' });
+  if (entry.messaging?.[0]) {
+    value = entry.messaging[0];
+    isDm = true;
+  } else if (entry.changes?.[0]) {
+    const change = entry.changes[0];
+    value = change.value;
+    changeField = change.field;
+    isMention = changeField === 'mentions' || changeField === 'comments' || !!value.comment_id;
   }
 
-  const isDm = !!value.sender || !!value.message_id;
-  const isMention = !!value.comment_id || (change?.field === 'mentions') || (change?.field === 'comments');
+  if (!value) {
+    return res.status(200).json({ success: true, message: 'Ignored missing payload content' });
+  }
 
   console.log(`Detected type: ${isDm ? 'DM' : isMention ? 'Mention' : 'Unknown'}`);
 
-  // Handle Meta's Webhook Test Payload (which has no message or sender/from)
-  if (!value.message && !value.from && !value.sender) {
+  // Handle Meta's Webhook Test Payload
+  if (!value.message && !value.from && !value.sender && !isDm) {
     console.log('Received structural Meta test webhook payload. Acknowledging with 200.');
     return res.status(200).json({ success: true, test: true });
   }
 
-  const rawMessage = value.message || value.text || '';
-  // Parse Reel URL from text
-  const urlMatch = rawMessage.match(/https?:\/\/[^\s]+/i);
-  let reelUrl = urlMatch ? urlMatch[0] : null;
+  // Extract raw message and reel URL
+  let rawMessage = '';
+  let reelUrl: string | null = null;
 
+  if (isDm) {
+    // DM Payload structure
+    const msg = value.message || {};
+    rawMessage = msg.text || '';
+    
+    // Check for Reel URL in attachments
+    const attachments = msg.attachments || [];
+    for (const attachment of attachments) {
+      if (attachment.payload?.url) {
+        reelUrl = attachment.payload.url;
+        break;
+      }
+    }
+  } else {
+    // Mention/Comment Payload structure
+    rawMessage = value.message || value.text || '';
+  }
+
+  // Fallback to regex for Reel URL in text if not found in attachments
   if (!reelUrl) {
-    const mediaId = value.media_id || value.post_id;
-    if (mediaId) {
+    const urlMatch = rawMessage.match(/https?:\/\/[^\s]+/i);
+    reelUrl = urlMatch ? urlMatch[0] : null;
+  }
+
+  // Fallback to media_id if still no URL
+  if (!reelUrl) {
+    const mediaId = value.media_id || value.post_id || value.id;
+    if (mediaId && !isDm) { // Only use getMediaPermalink for mentions/comments
       reelUrl = await getMediaPermalink(mediaId);
     }
   }
 
-  // Extract reporter username natively from DM payload, mention payload, or fallback to regex in message text
+  // Extract reporter username
   let reporterUsername = value.from?.username || value.from?.id || value.sender?.username || value.sender?.id;
   if (!reporterUsername) {
     const usernameMatch = rawMessage.match(/@([a-zA-Z0-9._-]+)/);
