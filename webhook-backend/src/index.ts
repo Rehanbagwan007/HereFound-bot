@@ -97,7 +97,7 @@ app.post('/webhook', async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, test: true });
   }
 
-  const rawMessage = value.message || '';
+  const rawMessage = value.message || value.text || '';
   // Parse Reel URL from text
   const urlMatch = rawMessage.match(/https?:\/\/[^\s]+/i);
   let reelUrl = urlMatch ? urlMatch[0] : null;
@@ -117,6 +117,13 @@ app.post('/webhook', async (req: Request, res: Response) => {
   }
 
   if (!reelUrl || !reporterUsername) {
+    console.log('422 Error Debug Info:', {
+      reelUrl,
+      reporterUsername,
+      rawMessage,
+      valueKeys: Object.keys(value),
+      value
+    });
     return res.status(422).json({ error: 'Unable to parse reel URL or reporter username', details: { reelUrl, reporterUsername, rawMessage } });
   }
 
