@@ -120,9 +120,21 @@ app.post('/webhook', async (req: Request, res: Response) => {
     
     // Check for Reel URL in attachments
     const attachments = msg.attachments || [];
+    console.log('DM Attachments:', JSON.stringify(attachments, null, 2));
+    
     for (const attachment of attachments) {
-      if (attachment.payload?.url) {
-        reelUrl = attachment.payload.url;
+      // Check multiple possible locations for the Reel URL in different attachment types
+      const url = 
+        attachment.payload?.url || 
+        attachment.payload?.link || 
+        attachment.payload?.share?.link ||
+        attachment.payload?.share?.url ||
+        attachment.payload?.video_share?.link ||
+        attachment.payload?.video_share?.url;
+
+      if (url) {
+        reelUrl = url;
+        console.log(`Found reel URL in attachment (type: ${attachment.type}): ${reelUrl}`);
         break;
       }
     }
