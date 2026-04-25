@@ -71,6 +71,7 @@ async function getMediaPermalink(mediaId: string): Promise<string | null> {
 
 app.post('/webhook', async (req: Request, res: Response) => {
   const payload = req.body as MetaWebhookPayload;
+  console.log('Incoming Webhook Payload:', JSON.stringify(payload, null, 2));
 
   if (!payload || payload.object !== 'instagram') {
     return res.status(200).json({ success: true, message: 'Ignored non-instagram object' });
@@ -88,8 +89,10 @@ app.post('/webhook', async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, message: 'Ignored missing change value' });
   }
 
-  const isDm = !!value.sender;
-  const isMention = !!value.comment_id;
+  const isDm = !!value.sender || !!value.message_id;
+  const isMention = !!value.comment_id || (change?.field === 'mentions') || (change?.field === 'comments');
+
+  console.log(`Detected type: ${isDm ? 'DM' : isMention ? 'Mention' : 'Unknown'}`);
 
   // Handle Meta's Webhook Test Payload (which has no message or sender/from)
   if (!value.message && !value.from && !value.sender) {
@@ -128,7 +131,9 @@ app.post('/webhook', async (req: Request, res: Response) => {
   }
 
   try {
+    console.log('Sending request to AI Engine at:', aiEngineUrl);
     const aiResponse = await axios.post(aiEngineUrl, { reel_url: reelUrl });
+    console.log('Received response from AI Engine:', JSON.stringify(aiResponse.data, null, 2));
     const analysis = aiResponse.data;
 
     const insertPayload = {
