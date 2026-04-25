@@ -84,6 +84,22 @@ async function getCommentDetails(commentId: string): Promise<{ username: string 
   }
 }
 
+async function getDmShareUrl(mid: string): Promise<string | null> {
+  try {
+    const response = await axios.get(`https://graph.facebook.com/v17.0/${mid}`, {
+      params: { fields: 'shares', access_token: pageAccessToken }
+    });
+    const shares = response.data.shares?.data;
+    if (shares && shares.length > 0 && shares[0].link) {
+      return shares[0].link;
+    }
+    return null;
+  } catch (err) {
+    console.error(`Failed to get DM share URL for ${mid}`, err);
+    return null;
+  }
+}
+
 app.post('/webhook', async (req: Request, res: Response) => {
   const payload = req.body as MetaWebhookPayload;
   console.log('Incoming Webhook Payload:', JSON.stringify(payload, null, 2));
@@ -151,6 +167,15 @@ app.post('/webhook', async (req: Request, res: Response) => {
         reelUrl = url;
         console.log(`Found reel URL in attachment (type: ${attachment.type}): ${reelUrl}`);
         break;
+      }
+    }
+
+    // Fallback: If attachments were empty (e.g. empty 'template' element), check Graph API shares
+    if (!reelUrl && msg.mid) {
+      console.log(`Checking Graph API for share link using message mid: ${msg.mid}`);
+      reelUrl = await getDmShareUrl(msg.mid);
+      if (reelUrl) {
+        console.log(`Found reel URL via Graph API shares: ${reelUrl}`);
       }
     }
   } else {
