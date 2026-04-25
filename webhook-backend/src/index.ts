@@ -69,6 +69,21 @@ async function getMediaPermalink(mediaId: string): Promise<string | null> {
   }
 }
 
+async function getCommentDetails(commentId: string): Promise<{ username: string | null, text: string | null }> {
+  try {
+    const response = await axios.get(`https://graph.facebook.com/v17.0/${commentId}`, {
+      params: { fields: 'from,text', access_token: pageAccessToken }
+    });
+    return {
+      username: response.data.from?.username || response.data.from?.id || null,
+      text: response.data.text || null
+    };
+  } catch (err) {
+    console.error(`Failed to get comment details for ${commentId}`, err);
+    return { username: null, text: null };
+  }
+}
+
 app.post('/webhook', async (req: Request, res: Response) => {
   const payload = req.body as MetaWebhookPayload;
   console.log('Incoming Webhook Payload:', JSON.stringify(payload, null, 2));
@@ -141,6 +156,18 @@ app.post('/webhook', async (req: Request, res: Response) => {
   } else {
     // Mention/Comment Payload structure
     rawMessage = value.message || value.text || '';
+    
+    // Fetch comment details if text is missing and it's a mention with a comment_id
+    if (isMention && value.comment_id && (!rawMessage || !value.from)) {
+      console.log(`Fetching details for comment ${value.comment_id}`);
+      const commentDetails = await getCommentDetails(value.comment_id);
+      if (commentDetails.text) {
+        rawMessage = commentDetails.text;
+      }
+      if (commentDetails.username) {
+        value.from = { ...value.from, username: commentDetails.username, id: value.from?.id || commentDetails.username };
+      }
+    }
   }
 
   // Fallback to regex for Reel URL in text if not found in attachments
