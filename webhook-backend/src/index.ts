@@ -102,8 +102,11 @@ app.post('/webhook', async (req: Request, res: Response) => {
   const urlMatch = rawMessage.match(/https?:\/\/[^\s]+/i);
   let reelUrl = urlMatch ? urlMatch[0] : null;
 
-  if (!reelUrl && value.media_id) {
-    reelUrl = await getMediaPermalink(value.media_id);
+  if (!reelUrl) {
+    const mediaId = value.media_id || value.post_id;
+    if (mediaId) {
+      reelUrl = await getMediaPermalink(mediaId);
+    }
   }
 
   // Extract reporter username natively from DM payload, mention payload, or fallback to regex in message text

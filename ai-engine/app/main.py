@@ -45,20 +45,12 @@ async def analyze(request: AnalyzeRequest):
         if not media_url:
             raise HTTPException(status_code=422, detail='Unable to resolve media stream from provided URL')
 
-        response = genai.predict(
-            model=GEMINI_MODEL,
-            input={
-                'content': [
-                    {'type': 'text', 'text': SYSTEM_PROMPT},
-                    {
-                        'type': 'image/*',
-                        'uri': media_url
-                    }
-                ]
-            }
+        model = genai.GenerativeModel(GEMINI_MODEL)
+        response = model.generate_content(
+            contents=[SYSTEM_PROMPT, media_url]
         )
 
-        raw_text = response.output_text or ''
+        raw_text = response.text or ''
 
         # The Gemini response must be strict JSON. If there is any extra text, try to parse JSON block.
         import json
