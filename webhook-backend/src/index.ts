@@ -236,6 +236,15 @@ app.post('/webhook', async (req: Request, res: Response) => {
       valueKeys: Object.keys(value),
       value
     });
+    
+    // Auto-reply to let the user know Instagram blocked the link
+    if (isDm && value.sender?.id) {
+      await sendMetaMessage(
+        value.sender.id, 
+        "⚠️ We couldn't instantly process the Reel you shared because of your account's privacy settings or Instagram API restrictions. \n\nTo report this Reel, please **Copy Link** from the Instagram post and **Paste the text link** here in the chat!"
+      ).catch(err => console.error('Failed to send fallback instructions', err));
+    }
+    
     return res.status(422).json({ error: 'Unable to parse reel URL or reporter username', details: { reelUrl, reporterUsername, rawMessage } });
   }
 

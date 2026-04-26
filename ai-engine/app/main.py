@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-pro')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-pro-latest')
 
 if not GOOGLE_API_KEY:
     raise RuntimeError('GOOGLE_API_KEY is required')
