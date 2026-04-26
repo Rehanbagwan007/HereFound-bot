@@ -135,7 +135,7 @@ app.post('/webhook', async (req: Request, res: Response) => {
   console.log(`Detected type: ${isDm ? 'DM' : isMention ? 'Mention' : 'Unknown'}`);
 
   // Handle Meta's Webhook Test Payload
-  if (!value.message && !value.from && !value.sender && !isDm) {
+  if (!value.message && !value.text && !value.from && !value.sender && !isDm && !isMention) {
     console.log('Received structural Meta test webhook payload. Acknowledging with 200.');
     return res.status(200).json({ success: true, test: true });
   }
