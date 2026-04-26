@@ -87,15 +87,27 @@ async function getCommentDetails(commentId: string): Promise<{ username: string 
 async function getDmShareUrl(mid: string): Promise<string | null> {
   try {
     const response = await axios.get(`https://graph.facebook.com/v17.0/${mid}`, {
-      params: { fields: 'shares', access_token: pageAccessToken }
+      params: { fields: 'shares,attachments,message', access_token: pageAccessToken }
     });
+    console.log(`Graph API response for mid ${mid}:`, JSON.stringify(response.data, null, 2));
+    
     const shares = response.data.shares?.data;
-    if (shares && shares.length > 0 && shares[0].link) {
-      return shares[0].link;
+    if (shares && shares.length > 0) {
+      const share = shares[0];
+      if (share.link) return share.link;
+      if (share.id) {
+        // sometimes shares only have IDs, we can try to fetch permalink
+        console.log(`Fallback: Getting permalink for shared media ID ${share.id}`);
+        return await getMediaPermalink(share.id);
+      }
     }
     return null;
   } catch (err) {
-    console.error(`Failed to get DM share URL for ${mid}`, err);
+    if (axios.isAxiosError(err)) {
+      console.error(`Failed to get DM share URL for ${mid}. Status: ${err.response?.status}, Data:`, err.response?.data);
+    } else {
+      console.error(`Failed to get DM share URL for ${mid}`, err);
+    }
     return null;
   }
 }
