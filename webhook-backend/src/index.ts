@@ -112,6 +112,8 @@ async function getDmShareUrl(mid: string): Promise<string | null> {
   }
 }
 
+const recentProcessedItems = new Set<string>();
+
 async function processWebhookInBackground(payload: MetaWebhookPayload) {
   console.log('Incoming Webhook Payload:', JSON.stringify(payload, null, 2));
 
@@ -144,6 +146,18 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
   if (!value) {
     console.log('Ignored missing payload content');
     return;
+  }
+
+  const uniqueId = isDm ? value.message?.mid : isMention ? value.comment_id : null;
+  if (uniqueId) {
+    if (recentProcessedItems.has(uniqueId)) {
+      console.log(`Duplicate webhook detected for ID: ${uniqueId}, suppressing to avoid Meta retry loops and Gemini API quota exhaustion.`);
+      return; 
+    }
+    // Mark as processing
+    recentProcessedItems.add(uniqueId);
+    // Cleanup cache after 5 minutes
+    setTimeout(() => recentProcessedItems.delete(uniqueId), 5 * 60 * 1000);
   }
 
   console.log(`Detected type: ${isDm ? 'DM' : isMention ? 'Mention' : 'Unknown'}`);
