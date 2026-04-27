@@ -37,17 +37,35 @@ class AnalyzeRequest(BaseModel):
 
 @app.post('/analyze')
 async def analyze(request: AnalyzeRequest):
+    import uuid
+    import time
+    file_path = f"/tmp/{uuid.uuid4()}.mp4"
+    uploaded_file = None
     try:
-        with yt_dlp.YoutubeDL({'quiet': True, 'format': 'best', 'noplaylist': True}) as ydl:
-            info = ydl.extract_info(str(request.reel_url), download=False)
-            media_url = info.get('url')
+        ydl_opts = {
+            'quiet': True, 
+            'format': 'best', 
+            'noplaylist': True,
+            'outtmpl': file_path
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.extract_info(str(request.reel_url), download=True)
+            
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=422, detail='Failed to download the video')
 
-        if not media_url:
-            raise HTTPException(status_code=422, detail='Unable to resolve media stream from provided URL')
+        uploaded_file = genai.upload_file(path=file_path)
+        
+        while uploaded_file.state.name == "PROCESSING":
+            time.sleep(2)
+            uploaded_file = genai.get_file(uploaded_file.name)
+            
+        if uploaded_file.state.name == "FAILED":
+            raise ValueError("Gemini failed to process the uploaded video file.")
 
         model = genai.GenerativeModel(GEMINI_MODEL)
         response = model.generate_content(
-            contents=[SYSTEM_PROMPT, media_url]
+            contents=[SYSTEM_PROMPT, uploaded_file]
         )
 
         raw_text = response.text or ''
@@ -72,3 +90,14 @@ async def analyze(request: AnalyzeRequest):
         return result
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+    finally:
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except:
+                pass
+        if uploaded_file:
+            try:
+                genai.delete_file(uploaded_file.name)
+            except:
+                pass
