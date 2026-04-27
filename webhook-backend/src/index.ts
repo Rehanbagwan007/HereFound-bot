@@ -288,16 +288,20 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
   }
 }
 
-app.post('/webhook', (req: Request, res: Response) => {
+app.post('/webhook', async (req: Request, res: Response) => {
   const payload = req.body as MetaWebhookPayload;
   
-  // 1. Immediate Acknowledgment to prevent Meta 429 retries
-  res.status(200).send('EVENT_RECEIVED');
+  // Vercel immediately freezes background logic the moment we call res.send().
+  // Therefore, we MUST await the AI processing before returning the HTTP response.
+  // Because we switched to `gemini-1.5-flash-latest`, it should be fast enough to avoid Meta's 20-second timeout.
+  try {
+    await processWebhookInBackground(payload);
+  } catch (err) {
+    console.error('Unhandled error in webhook processing:', err);
+  }
 
-  // 2. Fire and Forget the Background Processing
-  processWebhookInBackground(payload).catch(err => {
-    console.error('Unhandled error in background webhook processing:', err);
-  });
+  // Acknowledge the webhook to Meta
+  res.status(200).send('EVENT_RECEIVED');
 });
 
 app.listen(port, () => {
