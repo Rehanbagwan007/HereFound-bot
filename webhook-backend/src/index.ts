@@ -112,17 +112,18 @@ async function getDmShareUrl(mid: string): Promise<string | null> {
   }
 }
 
-app.post('/webhook', async (req: Request, res: Response) => {
-  const payload = req.body as MetaWebhookPayload;
+async function processWebhookInBackground(payload: MetaWebhookPayload) {
   console.log('Incoming Webhook Payload:', JSON.stringify(payload, null, 2));
 
   if (!payload || payload.object !== 'instagram') {
-    return res.status(200).json({ success: true, message: 'Ignored non-instagram object' });
+    console.log('Ignored non-instagram object');
+    return;
   }
 
   const entry = payload.entry?.[0];
   if (!entry) {
-    return res.status(200).json({ success: true, message: 'Ignored missing payload entry' });
+    console.log('Ignored missing payload entry');
+    return;
   }
 
   let value: any = null;
@@ -141,15 +142,16 @@ app.post('/webhook', async (req: Request, res: Response) => {
   }
 
   if (!value) {
-    return res.status(200).json({ success: true, message: 'Ignored missing payload content' });
+    console.log('Ignored missing payload content');
+    return;
   }
 
   console.log(`Detected type: ${isDm ? 'DM' : isMention ? 'Mention' : 'Unknown'}`);
 
   // Handle Meta's Webhook Test Payload
   if (!value.message && !value.text && !value.from && !value.sender && !isDm && !isMention) {
-    console.log('Received structural Meta test webhook payload. Acknowledging with 200.');
-    return res.status(200).json({ success: true, test: true });
+    console.log('Received structural Meta test webhook payload.');
+    return;
   }
 
   // Extract raw message and reel URL
@@ -229,7 +231,7 @@ app.post('/webhook', async (req: Request, res: Response) => {
   }
 
   if (!reelUrl || !reporterUsername) {
-    console.log('422 Error Debug Info:', {
+    console.log('Unable to parse reel URL or reporter username Debug Info:', {
       reelUrl,
       reporterUsername,
       rawMessage,
@@ -245,12 +247,12 @@ app.post('/webhook', async (req: Request, res: Response) => {
       ).catch(err => console.error('Failed to send fallback instructions', err));
     }
     
-    return res.status(422).json({ error: 'Unable to parse reel URL or reporter username', details: { reelUrl, reporterUsername, rawMessage } });
+    return;
   }
 
   try {
     console.log('Sending request to AI Engine at:', aiEngineUrl);
-    const aiResponse = await axios.post(aiEngineUrl, { reel_url: reelUrl });
+    const aiResponse = await axios.post(aiEngineUrl as string, { reel_url: reelUrl });
     console.log('Received response from AI Engine:', JSON.stringify(aiResponse.data, null, 2));
     const analysis = aiResponse.data;
 
@@ -268,7 +270,7 @@ app.post('/webhook', async (req: Request, res: Response) => {
     const { data, error } = await supabase.from('flagged_violations').insert(insertPayload).select('id');
     if (error) {
       console.error('Supabase insert failed', error);
-      return res.status(500).json({ error: 'Database insert failed' });
+      return;
     }
 
     const reportId = data?.[0]?.id;
@@ -280,11 +282,22 @@ app.post('/webhook', async (req: Request, res: Response) => {
       await replyToComment(value.comment_id, `@${reporterUsername} A potential violation has been detected. View your drafted complaint here: ${publicReportUrl}`);
     }
 
-    return res.status(200).json({ success: true, analysis, reportId });
+    console.log(`Webhook processing completed successfully for reportId: ${reportId}`);
   } catch (err) {
     console.error('Webhook processing error', err);
-    return res.status(500).json({ error: 'Internal webhook error' });
   }
+}
+
+app.post('/webhook', (req: Request, res: Response) => {
+  const payload = req.body as MetaWebhookPayload;
+  
+  // 1. Immediate Acknowledgment to prevent Meta 429 retries
+  res.status(200).send('EVENT_RECEIVED');
+
+  // 2. Fire and Forget the Background Processing
+  processWebhookInBackground(payload).catch(err => {
+    console.error('Unhandled error in background webhook processing:', err);
+  });
 });
 
 app.listen(port, () => {
