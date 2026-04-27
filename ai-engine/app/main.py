@@ -89,7 +89,11 @@ async def analyze(request: AnalyzeRequest):
 
         return result
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        import traceback
+        import sys
+        print(f"AI Engine Analysis Error occurred: {exc}", file=sys.stderr)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"AI Engine Error: {str(exc)}")
     finally:
         if os.path.exists(file_path):
             try:
