@@ -38,15 +38,27 @@ app.get('/webhook', (req: Request, res: Response) => {
 
 
 async function sendMetaMessage(recipientId: string, text: string) {
-  await axios.post(
-    `https://graph.facebook.com/v17.0/${recipientId}/messages`,
-    {
-      message: { text },
-    },
-    {
-      params: { access_token: pageAccessToken },
+  try {
+    const response = await axios.post(
+      `https://graph.facebook.com/v17.0/me/messages`,
+      {
+        recipient: { id: recipientId },
+        message: { text },
+        messaging_type: 'RESPONSE',
+      },
+      {
+        params: { access_token: pageAccessToken },
+      }
+    );
+    console.log(`DM sent to ${recipientId}:`, response.data);
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      console.error(`Failed to send DM to ${recipientId}. Status: ${err.response?.status}, Data:`, JSON.stringify(err.response?.data));
+    } else {
+      console.error(`Failed to send DM to ${recipientId}`, err);
     }
-  );
+    throw err;
+  }
 }
 
 async function replyToComment(commentId: string, text: string) {
