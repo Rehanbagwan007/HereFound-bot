@@ -290,13 +290,40 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
     const reportId = data?.[0]?.id;
     const publicReportUrl = `${process.env.PUBLIC_DASHBOARD_URL || 'https://herefound.example.com'}/public-report/${reportId}`;
 
-    if (isDm) {
-      await sendMetaMessage(value.sender.id, `Analysis result:\n${JSON.stringify(analysis, null, 2)}`);
+    if (isDm && value.sender?.id) {
+      let replyMessage: string;
+
+      if (analysis.is_violation) {
+        replyMessage =
+          `🚨 *Violation Detected!*\n\n` +
+          `📋 *Type:* ${analysis.violation_type || 'N/A'}\n` +
+          `⚖️ *IT Act Section:* ${analysis.it_act_section || 'N/A'}\n` +
+          `📊 *Confidence:* ${analysis.confidence ?? 'N/A'}%\n\n` +
+          `📝 *Complaint Draft:*\n${analysis.cyber_police_draft || 'N/A'}\n\n` +
+          `🔗 *Full Report:* ${publicReportUrl}`;
+      } else {
+        replyMessage =
+          `✅ *No Violation Found*\n\n` +
+          `The Reel you shared appears to be clean based on our analysis.\n` +
+          `📊 *Confidence:* ${analysis.confidence ?? 'N/A'}%\n\n` +
+          `🔗 *Full Report:* ${publicReportUrl}`;
+      }
+
+      await sendMetaMessage(value.sender.id, replyMessage);
     } else if (isMention) {
-      await replyToComment(value.comment_id, `@${reporterUsername} A potential violation has been detected. View your drafted complaint here: ${publicReportUrl}`);
+      await replyToComment(value.comment_id, `@${reporterUsername} ${analysis.is_violation ? '🚨 A potential violation has been detected.' : '✅ No violation found.'} View the full report here: ${publicReportUrl}`);
     }
 
     console.log(`Webhook processing completed successfully for reportId: ${reportId}`);
+    console.log('=== ANALYSIS REPORT ===');
+    console.log(`Reel URL: ${reelUrl}`);
+    console.log(`Reporter: ${reporterUsername}`);
+    console.log(`Status: ${analysis.is_violation ? '🚨 VIOLATION' : '✅ CLEAN'}`);
+    console.log(`Violation Type: ${analysis.violation_type || 'N/A'}`);
+    console.log(`IT Act Section: ${analysis.it_act_section || 'N/A'}`);
+    console.log(`Confidence: ${analysis.confidence ?? 'N/A'}%`);
+    console.log(`DB Record ID: ${reportId}`);
+    console.log('=======================');
   } catch (err) {
     console.error('Webhook processing error', err);
   }

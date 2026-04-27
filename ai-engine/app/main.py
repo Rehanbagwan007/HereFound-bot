@@ -87,6 +87,13 @@ async def analyze(request: AnalyzeRequest):
             else:
                 raise
 
+        print('=== ANALYSIS REPORT ===')
+        print(f"Reel URL: {request.reel_url}")
+        print(f"Status: {'🚨 VIOLATION' if result.get('is_violation') else '✅ CLEAN'}")
+        print(f"Violation Type: {result.get('violation_type', 'N/A')}")
+        print(f"IT Act Section: {result.get('it_act_section', 'N/A')}")
+        print(f"Confidence: {result.get('confidence', 'N/A')}%")
+        print('=======================')
         return result
     except Exception as exc:
         import traceback
