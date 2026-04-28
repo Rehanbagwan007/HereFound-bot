@@ -295,8 +295,8 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
 
     const { data, error } = await supabase.from('flagged_violations').insert(insertPayload).select('id');
     if (error) {
-      console.error('Supabase insert failed', error);
-      return;
+      // Log but do NOT return - we still want to send the DM reply even if DB insert fails
+      console.error('Supabase insert failed (non-fatal):', JSON.stringify(error));
     }
 
     const reportId = data?.[0]?.id;
@@ -321,7 +321,9 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
           `🔗 *Full Report:* ${publicReportUrl}`;
       }
 
+      console.log(`[DM SEND] Attempting to DM sender: ${value.sender.id}`);
       await sendMetaMessage(value.sender.id, replyMessage);
+      console.log(`[DM SEND] DM sent successfully to: ${value.sender.id}`);
     } else if (isMention) {
       await replyToComment(value.comment_id, `@${reporterUsername} ${analysis.is_violation ? '🚨 A potential violation has been detected.' : '✅ No violation found.'} View the full report here: ${publicReportUrl}`);
     }
