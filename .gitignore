@@ -7,6 +7,9 @@ coverage
 # Python
 __pycache__
 *.py[cod]
+/ai-engine/.env
+/frontend/.env
+/webhook-backend/.env
 
 
 # Next.js
