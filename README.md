@@ -37,7 +37,7 @@ HereFound is an automated IT Act compliance and deepfake detection system for di
 
 Use `database/schema.sql` to provision the Supabase tables and enable RLS.
 
-## Notes
+## NOTES
 
 - The webhook backend processes Instagram mentions and DMs, forwards reel URLs to the AI engine, stores results in Supabase, and responds through Meta Graph API.
 - The AI engine uses Gemini 1.5 Pro with a strict legal prompt to identify IT Act violations.
