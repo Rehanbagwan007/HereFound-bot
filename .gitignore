@@ -1,23 +1,53 @@
 # Node
-node_modules
+node_modules/
 npm-debug.log*
 .DS_Store
-coverage
+coverage/
 
 # Python
-__pycache__
+__pycache__/
 *.py[cod]
-/ai-engine/.env
-/frontend/.env
-/webhook-backend/.env
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
 
+# Environment variables — all subfolders
+.env
+.env.*
+!.env.example
+webhook-backend/.env
+webhook-backend/.env.*
+ai-engine/.env
+ai-engine/.env.*
+frontend/.env
+frontend/.env.*
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
 
 # Next.js
-.next
-out
+.next/
+out/
+
+# Vercel
+.vercel/
 
 # Supabase
-supabase/.cache
+supabase/.cache/
+
+# Build output
+webhook-backend/dist/
+
+# Temp / scratch
+ai-engine/test_gemini.py
+ai-engine/list_models.py
+ai-engine/__pycache__/
 
 # IDE
-.vscode
+.vscode/
+.idea/
