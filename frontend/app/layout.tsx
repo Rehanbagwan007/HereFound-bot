@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { ThemeProvider } from './theme';
 
 export const metadata: Metadata = {
   title: 'HereFound — Cyber Compliance Dashboard',
@@ -9,8 +10,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body style={{ fontFamily: 'Inter, sans-serif', background: '#0a0a0a', color: '#fff', margin: 0 }}>{children}</body>
+    <html lang="en" data-theme="dark">
+      <body style={{ fontFamily: 'Inter, sans-serif', margin: 0 }}>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

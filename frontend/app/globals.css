@@ -3,35 +3,98 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* ===================== DARK THEME (default) ===================== */
+:root,
+[data-theme="dark"] {
   --ig-purple: #833ab4;
   --ig-pink: #fd1d1d;
   --ig-orange: #fcb045;
   --ig-gradient: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
+
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #121212;
+  --bg-tertiary: rgba(255, 255, 255, 0.04);
+
   --glass-bg: rgba(255, 255, 255, 0.04);
   --glass-border: rgba(255, 255, 255, 0.08);
+
+  --sidebar-bg: rgba(18, 18, 18, 0.95);
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+
+  --header-bg: rgba(10, 10, 10, 0.95);
+  --header-border: rgba(255, 255, 255, 0.06);
+
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-muted: rgba(255, 255, 255, 0.3);
+
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --card-border: rgba(255, 255, 255, 0.08);
+
+  --input-border: rgba(131, 58, 180, 0.4);
+  --input-bg: transparent;
+
+  --chat-bg: rgba(18, 18, 18, 0.97);
+  --chat-border: rgba(131, 58, 180, 0.4);
+  --chat-msg-bg: rgba(255, 255, 255, 0.06);
+  --chat-msg-border: rgba(255, 255, 255, 0.08);
+  --chat-header-bg: linear-gradient(135deg, rgba(131,58,180,0.15), rgba(253,29,29,0.08));
+
+  --divider: rgba(255, 255, 255, 0.06);
+  --empty-icon-bg: rgba(131, 58, 180, 0.1);
+  --empty-icon-border: rgba(131, 58, 180, 0.2);
 }
 
+/* ===================== LIGHT THEME ===================== */
+[data-theme="light"] {
+  --ig-purple: #833ab4;
+  --ig-pink: #fd1d1d;
+  --ig-orange: #fcb045;
+  --ig-gradient: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
+
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: rgba(0, 0, 0, 0.03);
+
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+
+  --sidebar-bg: rgba(255, 255, 255, 0.97);
+  --sidebar-border: rgba(0, 0, 0, 0.07);
+
+  --header-bg: rgba(245, 245, 245, 0.97);
+  --header-border: rgba(0, 0, 0, 0.07);
+
+  --text-primary: #111111;
+  --text-secondary: rgba(0, 0, 0, 0.55);
+  --text-muted: rgba(0, 0, 0, 0.35);
+
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(0, 0, 0, 0.07);
+
+  --input-border: rgba(131, 58, 180, 0.35);
+  --input-bg: rgba(0, 0, 0, 0.02);
+
+  --chat-bg: rgba(255, 255, 255, 0.98);
+  --chat-border: rgba(131, 58, 180, 0.35);
+  --chat-msg-bg: rgba(0, 0, 0, 0.04);
+  --chat-msg-border: rgba(0, 0, 0, 0.07);
+  --chat-header-bg: linear-gradient(135deg, rgba(131,58,180,0.08), rgba(253,29,29,0.04));
+
+  --divider: rgba(0, 0, 0, 0.07);
+  --empty-icon-bg: rgba(131, 58, 180, 0.07);
+  --empty-icon-border: rgba(131, 58, 180, 0.15);
+}
+
+/* ===================== BASE ===================== */
 * { box-sizing: border-box; }
 
 body {
   font-family: 'Inter', sans-serif;
-  background: #0a0a0a;
-  color: #fff;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   margin: 0;
-}
-
-.ig-gradient-text {
-  background: var(--ig-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.ig-gradient-border {
-  background: var(--ig-gradient);
-  padding: 1px;
-  border-radius: 12px;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 .glass-card {
@@ -39,6 +102,14 @@ body {
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.ig-gradient-text {
+  background: var(--ig-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .scrollbar-hidden::-webkit-scrollbar { display: none; }
@@ -64,3 +135,10 @@ body {
 .typing-dot { animation: typing 1.4s ease-in-out infinite; }
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes theme-toggle {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(0.8); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+.theme-toggle-spin { animation: theme-toggle 0.4s ease forwards; }

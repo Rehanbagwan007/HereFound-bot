@@ -89,18 +89,18 @@ Date: ${new Date(report.created_at).toLocaleString()}
     <div className="fixed inset-0 z-50 flex items-end justify-end p-4 md:p-6 pointer-events-none">
       <div
         className="pointer-events-auto w-full max-w-md h-[600px] flex flex-col rounded-2xl overflow-hidden slide-up"
-        style={{ background: 'rgba(18,18,18,0.97)', border: '1px solid rgba(131,58,180,0.4)', boxShadow: '0 25px 60px rgba(131,58,180,0.25)' }}
+        style={{ background: 'var(--chat-bg)', border: '1px solid var(--chat-border)', boxShadow: '0 25px 60px rgba(131,58,180,0.2)' }}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'linear-gradient(135deg, rgba(131,58,180,0.15), rgba(253,29,29,0.08))' }}>
+        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--divider)', background: 'var(--chat-header-bg)' }}>
           <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: 'linear-gradient(45deg, #833ab4, #fd1d1d)' }}>
             AI
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-sm">HereFound AI Assistant</div>
-            <div className="text-xs text-gray-400">Report #{report.id.slice(0, 8)}</div>
+            <div className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>HereFound AI Assistant</div>
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Report #{report.id.slice(0, 8)}</div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">×</button>
+          <button onClick={onClose} className="transition-colors text-xl leading-none" style={{ color: 'var(--text-muted)' }}>×</button>
         </div>
 
         {/* Messages */}
@@ -112,11 +112,12 @@ Date: ${new Date(report.created_at).toLocaleString()}
               )}
               <div
                 className="max-w-[78%] px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap"
-                style={
-                  msg.role === 'user'
-                    ? { background: 'linear-gradient(45deg, #833ab4, #fd1d1d)', borderBottomRightRadius: 4 }
-                    : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderBottomLeftRadius: 4 }
-                }
+                style={{
+                  color: 'var(--text-primary)',
+                  ...(msg.role === 'user'
+                    ? { background: 'linear-gradient(45deg, #833ab4, #fd1d1d)', borderBottomRightRadius: 4, color: '#fff' }
+                    : { background: 'var(--chat-msg-bg)', border: '1px solid var(--chat-msg-border)', borderBottomLeftRadius: 4 })
+                }}
               >
                 {msg.content}
               </div>
@@ -125,7 +126,7 @@ Date: ${new Date(report.created_at).toLocaleString()}
           {loading && (
             <div className="flex justify-start">
               <div className="w-7 h-7 rounded-full flex-shrink-0 mr-2 flex items-center justify-center text-xs font-bold" style={{ background: 'linear-gradient(45deg, #833ab4, #fd1d1d)' }}>F</div>
-              <div className="px-4 py-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="px-4 py-3 rounded-2xl" style={{ background: 'var(--chat-msg-bg)', border: '1px solid var(--chat-msg-border)' }}>
                 <span className="typing-dot inline-block w-2 h-2 rounded-full bg-gray-400 mr-1" />
                 <span className="typing-dot inline-block w-2 h-2 rounded-full bg-gray-400 mr-1" />
                 <span className="typing-dot inline-block w-2 h-2 rounded-full bg-gray-400" />
@@ -136,14 +137,14 @@ Date: ${new Date(report.created_at).toLocaleString()}
         </div>
 
         {/* Input */}
-        <div className="px-4 py-3 border-t flex gap-2" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="px-4 py-3 border-t flex gap-2" style={{ borderColor: 'var(--divider)' }}>
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
             placeholder="Ask about this report..."
-            className="flex-1 bg-transparent border rounded-xl px-3 py-2 text-sm outline-none transition-all"
-            style={{ borderColor: 'rgba(131,58,180,0.4)', color: '#fff' }}
+            className="flex-1 border rounded-xl px-3 py-2 text-sm outline-none transition-all"
+            style={{ borderColor: 'var(--input-border)', background: 'var(--input-bg)', color: 'var(--text-primary)' }}
           />
           <button
             onClick={sendMessage}
@@ -189,8 +190,12 @@ export function ReportCard({ report }: { report: Report }) {
   return (
     <>
       <div
-        className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-200 cursor-pointer group"
-        style={{ borderColor: isViolation ? 'rgba(255,68,68,0.25)' : 'rgba(34,197,94,0.2)' }}
+        className="rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-200 cursor-pointer group"
+        style={{
+          background: 'var(--card-bg)',
+          border: `1px solid ${isViolation ? 'rgba(255,68,68,0.25)' : 'rgba(34,197,94,0.2)'}`,
+          backdropFilter: 'blur(20px)',
+        }}
       >
         {/* Thumbnail */}
         <div className="relative h-40 flex items-center justify-center" style={{ background: 'rgba(131,58,180,0.08)' }}>
@@ -217,8 +222,8 @@ export function ReportCard({ report }: { report: Report }) {
         <div className="p-4">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-400 mb-0.5">Violation Type</p>
-              <p className="text-sm font-semibold truncate">{report.violation_type || 'None Detected'}</p>
+              <p className="text-xs mb-0.5" style={{ color: 'var(--text-muted)' }}>Violation Type</p>
+              <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{report.violation_type || 'None Detected'}</p>
               {report.it_act_section && <p className="text-xs mt-0.5" style={{ color: '#833ab4' }}>{report.it_act_section}</p>}
             </div>
             <ConfidenceRing value={conf} color={confColor} />
@@ -230,9 +235,9 @@ export function ReportCard({ report }: { report: Report }) {
               <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'linear-gradient(45deg, #833ab4, #fd1d1d)' }}>
                 {(report.reporter_username || '?')[0].toUpperCase()}
               </div>
-              <span className="text-xs text-gray-300 truncate max-w-[100px]">@{report.reporter_username}</span>
+              <span className="text-xs truncate max-w-[100px]" style={{ color: 'var(--text-secondary)' }}>@{report.reporter_username}</span>
             </div>
-            <span className="text-xs text-gray-500">{new Date(report.created_at).toLocaleDateString()}</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{new Date(report.created_at).toLocaleDateString()}</span>
           </div>
 
           {/* Ask AI button */}
