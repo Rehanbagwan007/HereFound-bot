@@ -18,10 +18,8 @@ const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 const verifyToken = process.env.META_VERIFY_TOKEN;
 const pageAccessToken = process.env.META_PAGE_ACCESS_TOKEN;
 const aiEngineUrl = process.env.AI_ENGINE_URL;
-const orgId = process.env.SUPABASE_ORG_ID;
-
-if (!verifyToken || !pageAccessToken || !aiEngineUrl || !orgId) {
-  throw new Error('META_VERIFY_TOKEN, META_PAGE_ACCESS_TOKEN, AI_ENGINE_URL, and SUPABASE_ORG_ID are required');
+if (!verifyToken || !pageAccessToken || !aiEngineUrl) {
+  throw new Error('META_VERIFY_TOKEN, META_PAGE_ACCESS_TOKEN, and AI_ENGINE_URL are required');
 }
 
 app.get('/webhook', (req: Request, res: Response) => {
@@ -297,9 +295,26 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
     console.log('Received response from AI Engine:', JSON.stringify(aiResponse.data, null, 2));
     const analysis = aiResponse.data;
 
+    let dynamicOrgId: string | null | undefined = process.env.SUPABASE_ORG_ID;
+    
+    // If not set or explicitly an invalid UUID string like the project ref, try to fetch the first organization from DB
+    if (!dynamicOrgId || !dynamicOrgId.includes('-')) {
+      try {
+        const { data: orgData } = await supabase.from('organizations').select('id').limit(1);
+        if (orgData && orgData.length > 0 && orgData[0].id) {
+          dynamicOrgId = orgData[0].id;
+        } else {
+          dynamicOrgId = null; // Let Postgres decide if it's required or not
+        }
+      } catch (err) {
+        dynamicOrgId = null; // No organizations table exists
+      }
+    }
+
     const insertPayload = {
-      org_id: orgId,
+      org_id: dynamicOrgId,
       reel_url: reelUrl,
+
       reporter_username: reporterUsername,
       message_mid: isDm ? value.message?.mid : null,
       status: analysis.is_violation ? 'flagged' : 'cleared',
