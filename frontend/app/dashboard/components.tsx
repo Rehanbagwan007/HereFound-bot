@@ -112,12 +112,11 @@ Date: ${new Date(report.created_at).toLocaleString()}
               )}
               <div
                 className="max-w-[78%] px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap"
-                style={{
-                  color: 'var(--text-primary)',
-                  ...(msg.role === 'user'
+                style={
+                  msg.role === 'user'
                     ? { background: 'linear-gradient(45deg, #833ab4, #fd1d1d)', borderBottomRightRadius: 4, color: '#fff' }
-                    : { background: 'var(--chat-msg-bg)', border: '1px solid var(--chat-msg-border)', borderBottomLeftRadius: 4 })
-                }}
+                    : { background: 'var(--chat-msg-bg)', border: '1px solid var(--chat-msg-border)', borderBottomLeftRadius: 4, color: 'var(--text-primary)' }
+                }
               >
                 {msg.content}
               </div>
