@@ -26,10 +26,20 @@ if not GOOGLE_API_KEY:
 genai.configure(api_key=GOOGLE_API_KEY)
 
 SYSTEM_PROMPT = (
-    "You are an expert Indian cyber-law legal assistant trained on the IT Act (2000) and IT Rules (2021). "
-    "Analyze this sports media video/audio. Determine if it contains manipulated audio, deepfakes, or promotes illegal offshore gambling. "
-    "Output strictly in JSON format: { 'is_violation': boolean, 'violation_type': string, 'it_act_section': string, 'confidence': integer, "
-    "'cyber_police_draft': string (If is_violation is true, write a formal, 3-sentence complaint draft addressed to the National Cyber Crime Reporting Portal of India detailing the specific manipulated content and the IT Act section violated. If false, return null.) }"
+    "You are an expert Indian cyber-law legal assistant and digital forensics analyst trained on the IT Act (2000) and IT Rules (2021). "
+    "Analyze this video carefully for two things:\n"
+    "1. LEGAL VIOLATIONS: Determine if it contains manipulated audio, deepfakes, or promotes illegal offshore gambling.\n"
+    "2. AI GENERATION: Determine if the video itself was generated or significantly synthesized by AI (look for unnatural motion, artifacts, inconsistent lighting, synthetic faces/voices, or other AI generation indicators).\n"
+    "Output STRICTLY in JSON format with these exact keys (no extra text, no markdown code fences):\n"
+    "{ "
+    "\"is_violation\": boolean, "
+    "\"violation_type\": string or null, "
+    "\"it_act_section\": string or null, "
+    "\"confidence\": integer (0-100), "
+    "\"is_ai_generated\": boolean, "
+    "\"ai_generation_confidence\": integer (0-100), "
+    "\"cyber_police_draft\": string or null (If is_violation is true, write a formal 3-sentence complaint addressed to the National Cyber Crime Reporting Portal of India. If false, return null.) "
+    "}"
 )
 
 class AnalyzeRequest(BaseModel):
@@ -93,6 +103,7 @@ async def analyze(request: AnalyzeRequest):
         print(f"Violation Type: {result.get('violation_type', 'N/A')}")
         print(f"IT Act Section: {result.get('it_act_section', 'N/A')}")
         print(f"Confidence: {result.get('confidence', 'N/A')}%")
+        print(f"AI Generated: {'🤖 YES' if result.get('is_ai_generated') else '👤 NO'} (confidence: {result.get('ai_generation_confidence', 'N/A')}%)")
         print('=======================')
         return result
     except Exception as exc:

@@ -265,12 +265,27 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
       value
     });
     
-    // Auto-reply to let the user know Instagram blocked the link
+    // Only send the fallback DM if this mid was NOT already successfully processed.
+    // This prevents spamming the user when Meta retries the webhook after a successful analysis.
     if (isDm && value.sender?.id) {
-      await sendMetaMessage(
-        value.sender.id, 
-        "⚠️ We couldn't instantly process the Reel you shared because of your account's privacy settings or Instagram API restrictions. \n\nTo report this Reel, please **Copy Link** from the Instagram post and **Paste the text link** here in the chat!"
-      ).catch(err => console.error('Failed to send fallback instructions', err));
+      const mid = value.message?.mid;
+      let alreadyProcessed = false;
+      if (mid) {
+        const { data: existing } = await supabase
+          .from('flagged_violations')
+          .select('id')
+          .eq('message_mid', mid)
+          .limit(1);
+        alreadyProcessed = !!(existing && existing.length > 0);
+      }
+      if (!alreadyProcessed) {
+        await sendMetaMessage(
+          value.sender.id, 
+          "⚠️ We couldn't instantly process the Reel you shared because of your account's privacy settings or Instagram API restrictions. \n\nTo report this Reel, please Copy Link from the Instagram post and paste the text link here in the chat!"
+        ).catch(err => console.error('Failed to send fallback instructions', err));
+      } else {
+        console.log(`Suppressing fallback DM — mid ${mid} was already processed successfully.`);
+      }
     }
     
     return;
@@ -286,10 +301,13 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
       org_id: orgId,
       reel_url: reelUrl,
       reporter_username: reporterUsername,
+      message_mid: isDm ? value.message?.mid : null,
       status: analysis.is_violation ? 'flagged' : 'cleared',
       violation_type: analysis.violation_type,
       it_act_section: analysis.it_act_section,
       confidence: analysis.confidence,
+      is_ai_generated: analysis.is_ai_generated ?? false,
+      ai_generation_confidence: analysis.ai_generation_confidence ?? null,
       cyber_police_draft: analysis.cyber_police_draft,
     };
 
@@ -310,14 +328,16 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
           `🚨 *Violation Detected!*\n\n` +
           `📋 *Type:* ${analysis.violation_type || 'N/A'}\n` +
           `⚖️ *IT Act Section:* ${analysis.it_act_section || 'N/A'}\n` +
-          `📊 *Confidence:* ${analysis.confidence ?? 'N/A'}%\n\n` +
+          `📊 *Confidence:* ${analysis.confidence ?? 'N/A'}%\n` +
+          `🤖 *AI Generated:* ${analysis.is_ai_generated ? `Yes (${analysis.ai_generation_confidence ?? '?'}% confidence)` : 'No'}\n\n` +
           `📝 *Complaint Draft:*\n${analysis.cyber_police_draft || 'N/A'}\n\n` +
           `🔗 *Full Report:* ${publicReportUrl}`;
       } else {
         replyMessage =
           `✅ *No Violation Found*\n\n` +
           `The Reel you shared appears to be clean based on our analysis.\n` +
-          `📊 *Confidence:* ${analysis.confidence ?? 'N/A'}%\n\n` +
+          `📊 *Confidence:* ${analysis.confidence ?? 'N/A'}%\n` +
+          `🤖 *AI Generated:* ${analysis.is_ai_generated ? `Yes (${analysis.ai_generation_confidence ?? '?'}% confidence)` : 'No'}\n\n` +
           `🔗 *Full Report:* ${publicReportUrl}`;
       }
 
@@ -336,6 +356,7 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
     console.log(`Violation Type: ${analysis.violation_type || 'N/A'}`);
     console.log(`IT Act Section: ${analysis.it_act_section || 'N/A'}`);
     console.log(`Confidence: ${analysis.confidence ?? 'N/A'}%`);
+    console.log(`AI Generated: ${analysis.is_ai_generated ? `🤖 YES (${analysis.ai_generation_confidence}%)` : '👤 NO'}`);
     console.log(`DB Record ID: ${reportId}`);
     console.log('=======================');
   } catch (err) {
