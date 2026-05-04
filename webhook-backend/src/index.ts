@@ -297,8 +297,9 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
 
     let dynamicOrgId: string | null | undefined = process.env.SUPABASE_ORG_ID;
     
-    // If not set or explicitly an invalid UUID string like the project ref, try to fetch the first organization from DB
-    if (!dynamicOrgId || !dynamicOrgId.includes('-')) {
+    // If not set, or if it doesn't strictly match a standard 36-character UUID format (to prevent typos like trailing letters), fetch from DB
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!dynamicOrgId || !uuidRegex.test(dynamicOrgId)) {
       try {
         const { data: orgData } = await supabase.from('organizations').select('id').limit(1);
         if (orgData && orgData.length > 0 && orgData[0].id) {
