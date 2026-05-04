@@ -158,6 +158,12 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
     return;
   }
 
+  // Ignore messages sent by the bot itself (echoes) to prevent infinite loops
+  if (value.message?.is_echo) {
+    console.log('Ignored message echo (bot reply)');
+    return;
+  }
+
   const uniqueId = isDm ? value.message?.mid : isMention ? value.comment_id : null;
   if (uniqueId) {
     if (recentProcessedItems.has(uniqueId)) {
@@ -262,29 +268,6 @@ async function processWebhookInBackground(payload: MetaWebhookPayload) {
       valueKeys: Object.keys(value),
       value
     });
-    
-    // Only send the fallback DM if this mid was NOT already successfully processed.
-    // This prevents spamming the user when Meta retries the webhook after a successful analysis.
-    if (isDm && value.sender?.id) {
-      const mid = value.message?.mid;
-      let alreadyProcessed = false;
-      if (mid) {
-        const { data: existing } = await supabase
-          .from('flagged_violations')
-          .select('id')
-          .eq('message_mid', mid)
-          .limit(1);
-        alreadyProcessed = !!(existing && existing.length > 0);
-      }
-      if (!alreadyProcessed) {
-        await sendMetaMessage(
-          value.sender.id, 
-          "⚠️ We couldn't instantly process the Reel you shared because of your account's privacy settings or Instagram API restrictions. \n\nTo report this Reel, please Copy Link from the Instagram post and paste the text link here in the chat!"
-        ).catch(err => console.error('Failed to send fallback instructions', err));
-      } else {
-        console.log(`Suppressing fallback DM — mid ${mid} was already processed successfully.`);
-      }
-    }
     
     return;
   }
